@@ -2,6 +2,24 @@ import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import time
 import user_data # Imports user data form an external file
+from hx711 import HX711
+
+# Tool constants
+TOOL_NAME = "Wrench"
+WEIGHT_THRESHOLD = 141.2   # change means that the wrench was moved
+
+def cleanAndExit():
+    print("Cleaning...")
+    GPIO.cleanup()
+    exit(0)
+    
+# Setup HX711 Weight Sensor
+hx = HX711(5, 6)
+hx.set_reading_format("MSB", "MSB")
+referenceUnit = -103.8573
+hx.set_reference_unit(referenceUnit)
+hx.reset()
+hx.tare()  
 
 # LED Pins Setup
 GREEN_LED = 16  # Access Granted LED (Green)
@@ -28,7 +46,34 @@ try:
         GPIO.output(GREEN_LED, GPIO.HIGH)
         time.sleep(3)
         GPIO.output(GREEN_LED, GPIO.LOW)
-        
+
+        # Watch the scale for any movement
+        print("Monitoring tool weight...")
+        while True:
+            try:
+                val1 = hx.get_weight(5)
+                val2 = hx.get_weight(5)
+                delta = val1 + val2         # Total change in grams
+                print(f"Weight Delta: {delta:.2f}g")
+
+               # Decide if the wrench was taken or returned
+               if delta < -WEIGHT_THRESHOLD:  # Tool Removed
+                    print(f"{TOOL_NAME} OUT")
+                    hx.reset()
+                    hx.tare()
+                
+                elif delta > WEIGHT_THRESHOLD:  # Tool Returned
+                    print(f"{TOOL_NAME} IN")
+                    hx.reset()
+                    hx.tare()
+
+                hx.power_down()
+                hx.power_up()
+                time.sleep(0.5)
+                
+            except KeyboardInterrupt:
+                cleanAndExit()
+                
     else:
         print("Access Denied") # Access denied
         # Turn on Red LED for 3 seconds
