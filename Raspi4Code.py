@@ -1,6 +1,7 @@
 import RPi.GPIO as GPIO
 from mfrc522 import SimpleMFRC522
 import time
+import user_data # Imports user data form an external file
 
 # LED Pins Setup
 GREEN_LED = 16  # Access Granted LED (Green)
@@ -11,12 +12,6 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setup(GREEN_LED, GPIO.OUT)
 GPIO.setup(RED_LED, GPIO.OUT)
 
-# User data (UIDs mapped to names)
-authorized_users = {
-    "978727076527": "Hamza Mirza",
-    "102005276757": "Joe Hoare"
-}
-
 reader = SimpleMFRC522()
 
 try:
@@ -25,8 +20,8 @@ try:
     uid_str = str(id)
 
     # RFID Security Check
-    if uid_str in authorized_users:
-        user_name = authorized_users[uid_str] # Access granted
+    if uid_str in user_data.authorized_users:
+        user_name = user_data.authorized_users[uid_str] # Access granted
         print(f"Access Granted, Hello {user_name}")
         
         # Turn on Green LED for 3 seconds
