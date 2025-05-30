@@ -11,18 +11,13 @@ import os
 TOOL_NAME = "Wrench"
 WEIGHT_THRESHOLD = 141.2   # change means that the wrench was moved
 
-def cleanAndExit():
-    print("Cleaning...")
-    GPIO.cleanup()
-    exit(0)
-    
 # Setup HX711 Weight Sensor
-hx = HX711(5, 6)
+hx = HX711(5, 6)  # DT pin 5, SCK pin 6
 hx.set_reading_format("MSB", "MSB")
-referenceUnit = -103.8573
+referenceUnit = -103.8573  # Calibration factor
 hx.set_reference_unit(referenceUnit)
-hx.reset()
-hx.tare()  
+hx.reset()   
+hx.tare() 
 
 # LED Pins Setup
 GREEN_LED = 16  # Access Granted LED (Green)
@@ -37,6 +32,11 @@ GPIO.setup(RED_LED, GPIO.OUT)
 LOG_FILE = "/home/hxm113/smart_toolbox_web/data/log.csv"
 TOOLS_CSV = "/home/hxm113/smart_toolbox_web/data/tools.csv"
 
+def cleanAndExit():
+    print("Cleaning...")
+    GPIO.cleanup()
+    exit(0)
+    
 # Ensure CSV files exist
 if not os.path.exists(LOG_FILE):
     with open(LOG_FILE, "w", newline="") as f:
