@@ -3,6 +3,9 @@ from mfrc522 import SimpleMFRC522
 import time
 import user_data # Imports user data form an external file
 from hx711 import HX711
+import csv
+from datetime import datetime
+import os
 
 # Tool constants
 TOOL_NAME = "Wrench"
@@ -29,6 +32,37 @@ RED_LED = 20    # Access Denied LED (Red)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(GREEN_LED, GPIO.OUT)
 GPIO.setup(RED_LED, GPIO.OUT)
+
+# File locations
+LOG_FILE = "/home/hxm113/smart_toolbox_web/data/log.csv"
+TOOLS_CSV = "/home/hxm113/smart_toolbox_web/data/tools.csv"
+
+# Ensure CSV files exist
+if not os.path.exists(LOG_FILE):
+    with open(LOG_FILE, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Time", "User", "Tool"])
+
+if not os.path.exists(TOOLS_CSV):
+    with open(TOOLS_CSV, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Tool", "Status", "Last Updated"])
+        writer.writerow([TOOL_NAME, "IN", ""])
+
+# Update tool status
+def update_tool_status(tool_name, status):
+    rows = []
+    with open(TOOLS_CSV, newline='') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            if row["Tool"] == tool_name:
+                row["Status"] = status
+                row["Last Updated"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            rows.append(row)
+    with open(TOOLS_CSV, "w", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=["Tool", "Status", "Last Updated"])
+        writer.writeheader()Add commentMore actions
+        writer.writerows(rows)
 
 reader = SimpleMFRC522()
 
@@ -59,11 +93,27 @@ try:
                # Decide if the wrench was taken or returned
                if delta < -WEIGHT_THRESHOLD:  # Tool Removed
                     print(f"{TOOL_NAME} OUT")
+                    update_tool_status(TOOL_NAME, "OUT")
+                    with open(LOG_FILE, "a", newline="") as f:
+                        writer = csv.writer(f)
+                        writer.writerow([
+                            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            user_name,
+                            f"{TOOL_NAME} OUT"
+                        ])
                     hx.reset()
                     hx.tare()
                 
                 elif delta > WEIGHT_THRESHOLD:  # Tool Returned
                     print(f"{TOOL_NAME} IN")
+                    update_tool_status(TOOL_NAME, "IN")
+                    with open(LOG_FILE, "a", newline="") as f:
+                        writer = csv.writer(f)
+                        writer.writerow([
+                            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                            user_name,
+                            f"{TOOL_NAME} IN"Add commentMore actions
+                        ])
                     hx.reset()
                     hx.tare()
 
