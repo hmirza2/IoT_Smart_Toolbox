@@ -1,4 +1,4 @@
 authorized_users = {
-    "978727076527": "Hamza Mirza",Add commentMore actions
+    "978727076527": "Hamza Mirza",
     "102005276757": "Joe Hoare"
 }
